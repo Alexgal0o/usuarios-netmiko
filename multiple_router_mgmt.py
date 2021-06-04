@@ -1,22 +1,35 @@
 import cisco_ios_dev as cid
-from netmiko import ConnectHandler
-from jinja2 import Template, utils
 
-cisco_3745 = {
+cisco_3745 = [{
     'device_type': 'cisco_ios',
-    'host': '192.168.6.128',
+    'host': '192.168.87.136',
     'username':'cisco',
     'password':'cisco',
     'port':22,
     'secret':'cisco'
-}
+},
+{
+    'device_type': 'cisco_ios',
+    'host': '192.168.87.200', #Dirección que acutalmente no existe
+    'username':'cisco',
+    'password':'cisco',
+    'port':22,
+    'secret':'cisco'
+},
+{
+    'device_type': 'cisco_ios',
+    'host': '192.168.87.137',
+    'username':'cisco',
+    'password':'cisco',
+    'port':22,
+    'secret':'cisco'
+},
+]
 
-net_connect = ConnectHandler(**cisco_3745)
-net_connect.enable()
+connection = cid.RoutersMGMT(cisco_3745)
+connection.startConnection()
 
-router = cid.Router(net_connect)
-
-def main():
+def actionsMenu(connection):
     menu = """
 
 SELECCIONE UNA OPCIÓN:
@@ -25,66 +38,62 @@ SELECCIONE UNA OPCIÓN:
 3) Agregar Usuarios
 4) Eliminar Usuarios
 5) Guardar Cambios
-6) Salir
+6) Respaldar configuración
+7) Salir
 
-Selección: """
+>: """
 
     while True:
         opcion = input(menu)
         if opcion == "1":
-            print("USUARIOS STARTUP:",*router.getUsers(running=False),sep="\n-",end="")
+            connection.getUsers(running=False)
 
         elif opcion == "2":
-            print("USUARIOS RUNNING: ",*router.getUsers(running=True),sep="\n-",end="")
+            connection.getUsers(running=True)
 
         elif opcion == "3":
-            agregarUsuario()
+            agregarUsuario(connection)
 
         elif opcion == "4":
-            eliminarUsuario()
+            eliminarUsuario(connection)
 
         elif opcion == "5":
-            print(router.saveConfig())
-            print("Cambios aplicados!")
+            connection.saveConfig()
 
         elif opcion == "6":
-            print("Finalizando sesión...")
-            net_connect.disconnect()
+            connection.backup()
+
+        elif opcion == "7":
+            
             break
         else:
             print("OPCIÓN INCORRECTA: Intente de nuevo")
             continue
 
-def agregarUsuario():
+def agregarUsuario(connection):
     while True:
         user = input("Ingrese el nombre de usuario (presione '0' para salir): ")
         if user == '0':
+            print("Acción cancelada por el usuario")
             break
-        if router.userExists(user):
-            print("El usuario ya existe")
-            continue
         else:
             secret = input("Ingrese la contraseña: ")
-            router.addUser(user,secret)
-            print("Usuario agregado con éxito!")
+            connection.addUser(user,secret)
 
-def eliminarUsuario():
+def eliminarUsuario(connection):
+    
     while True:
         user = input("Ingrese el nombre de usuario a eliminar (presione '0' para salir): ")
         if user == '0':
             break
-        if not router.userExists(user):
-            print("El usuario no existe")
-            continue
         else:
             opc = input("Presione 's' para confirmar: ")
             if opc.lower() == 's':
-                router.deleteUser(user)
-                print("El usuario ha sido eliminado")
+                connection.deleteUser(user)
             else:
                 print("Acción cancelada")
-                continue   
+                continue  
 
 
 if __name__ == '__main__':
-    main()
+    actionsMenu(connection)
