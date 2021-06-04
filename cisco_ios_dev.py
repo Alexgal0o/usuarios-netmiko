@@ -2,7 +2,6 @@ from jinja2 import Template,utils
 from netmiko import ConnectHandler
 from tabulate import tabulate
 from termcolor import colored
-from prettytable import PrettyTable
 import os
 
 class Router():
